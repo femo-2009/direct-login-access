@@ -87,9 +87,16 @@ export default function LoginPage() {
       // Allow login by email OR username — resolve username to email via profiles
       let email = identifier.trim();
       if (!email.includes("@")) {
-        toast.error(t.errorCredentials);
-        setIsSubmitting(false);
-        return;
+        const { data: resolvedEmail } = await supabase.rpc(
+          "get_email_by_username",
+          { _username: email },
+        );
+        if (!resolvedEmail) {
+          toast.error(t.errorCredentials);
+          setIsSubmitting(false);
+          return;
+        }
+        email = resolvedEmail as string;
       }
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
