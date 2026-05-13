@@ -1,14 +1,44 @@
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
+import { LanguageProvider } from "@/contexts/LanguageContext";
+import { useSupabaseSession } from "@/hooks/useSupabaseSession";
+import { TopBar } from "@/components/TopBar";
+
+function SessionBootstrap() {
+  useSupabaseSession();
+  return null;
+}
+
+function SplashGate() {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let shown: string | null = null;
+    try {
+      shown = sessionStorage.getItem("rawy-splash-shown");
+    } catch {}
+    // Show splash only on first open of the site/app in this session
+    if (!shown && window.location.pathname !== "/") {
+      router.navigate({ to: "/" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return null;
+}
+
 
 function NotFoundComponent() {
   return (
@@ -72,11 +102,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Rawy Blog" },
+      { name: "description", content: "Rawy Blog — stories worth telling, in Arabic and English." },
+      { name: "author", content: "Rawy Blog" },
+      { property: "og:title", content: "Rawy Blog" },
+      { property: "og:description", content: "Rawy Blog — stories worth telling, in Arabic and English." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
@@ -108,12 +138,25 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+const HIDE_TOPBAR_ON = new Set(["/", "/login", "/signup", "/welcome", "/permissions"]);
+
+function GlobalTopBar() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  if (HIDE_TOPBAR_ON.has(pathname)) return null;
+  return <TopBar />;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <LanguageProvider>
+        <SessionBootstrap />
+        <SplashGate />
+        <GlobalTopBar />
+        <Outlet />
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }
