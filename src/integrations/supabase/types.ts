@@ -324,6 +324,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_email_by_username: { Args: { _username: string }; Returns: string }
       has_admin_permission: {
         Args: { _perm: string; _user_id: string }
         Returns: boolean
