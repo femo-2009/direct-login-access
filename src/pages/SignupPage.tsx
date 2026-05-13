@@ -50,6 +50,8 @@ const EN = {
   errorFix: "Please fix the errors below",
   successMsg: "Account created successfully! Welcome to Rawy 🎉",
   errorMsg: "An error occurred while creating the account. Please try again.",
+  emailExists: "This email is already registered. Please sign in instead.",
+  signInFailed: "Account created but auto sign-in failed. Please log in manually.",
   googleSoon: "Google sign-up coming soon",
   nameRequired: "Full name is required",
   usernameRequired: "Username is required",
@@ -95,6 +97,8 @@ const AR = {
   errorFix: "يرجى تصحيح الأخطاء أدناه",
   successMsg: "تم إنشاء حسابك بنجاح! مرحباً بك في راوي 🎉",
   errorMsg: "حدث خطأ أثناء إنشاء الحساب. حاول مجدداً.",
+  emailExists: "هذا البريد مسجل مسبقاً. سجل الدخول بدلاً من ذلك.",
+  signInFailed: "تم إنشاء الحساب لكن فشل تسجيل الدخول التلقائي. سجل دخولك يدوياً.",
   googleSoon: "سيتوفر التسجيل بجوجل قريباً",
   nameRequired: "الاسم الكامل مطلوب",
   usernameRequired: "اسم المستخدم مطلوب",
@@ -174,11 +178,32 @@ export default function SignupPage() {
           },
         },
       });
+
       if (error) {
-        toast.error(error.message || t.errorMsg);
+        const msg = error.message?.toLowerCase() ?? "";
+        if (
+          msg.includes("already registered") ||
+          msg.includes("already exists") ||
+          msg.includes("user already")
+        ) {
+          toast.error(t.emailExists);
+          navigate({ to: "/login" });
+        } else {
+          toast.error(error.message || t.errorMsg);
+        }
         setIsSubmitting(false);
         return;
       }
+
+      // Detect "fake" signup of an existing email (Supabase returns identities: [])
+      const identities = data.user?.identities;
+      if (identities && identities.length === 0) {
+        toast.error(t.emailExists);
+        navigate({ to: "/login" });
+        setIsSubmitting(false);
+        return;
+      }
+
       // Skip email verification — sign the user in immediately.
       if (!data.session) {
         const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -186,11 +211,13 @@ export default function SignupPage() {
           password: form.password,
         });
         if (signInError) {
-          toast.error(signInError.message || t.errorMsg);
+          toast.error(t.signInFailed);
+          navigate({ to: "/login" });
           setIsSubmitting(false);
           return;
         }
       }
+
       toast.success(t.successMsg);
       navigate({ to: "/permissions" });
     } catch {
