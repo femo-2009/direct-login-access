@@ -179,13 +179,20 @@ export default function SignupPage() {
         setIsSubmitting(false);
         return;
       }
-      toast.success(t.successMsg);
-      // If session is returned (auto-confirm on), go to permissions; otherwise tell them to verify email.
-      if (data.session) {
-        navigate({ to: "/permissions" });
-      } else {
-        navigate({ to: "/login" });
+      // Skip email verification — sign the user in immediately.
+      if (!data.session) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: form.email.trim(),
+          password: form.password,
+        });
+        if (signInError) {
+          toast.error(signInError.message || t.errorMsg);
+          setIsSubmitting(false);
+          return;
+        }
       }
+      toast.success(t.successMsg);
+      navigate({ to: "/permissions" });
     } catch {
       toast.error(t.errorMsg);
     } finally {
