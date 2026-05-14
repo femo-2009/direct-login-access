@@ -131,13 +131,30 @@ function UserManagement() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const [selected, setSelected] = useState<{ id: string; display_name: string | null; email?: string } | null>(null);
+
   return (
-    <UserSearch
-      placeholder={lang === "ar" ? "ابحث بالاسم أو الايميل" : "Search by name or email"}
-      onSelect={() => {}}
-    >
-      {/* render in extension below */}
-    </UserSearch>
+    <div className="space-y-4">
+      <UserSearch
+        placeholder={lang === "ar" ? "ابحث بالاسم أو الايميل" : "Search by name or email"}
+        onSelect={(u) => setSelected({ id: u.id, display_name: u.display_name, email: u.email })}
+      />
+      {selected && (
+        <div className="bg-card border border-primary/40 rounded-xl p-4 flex items-center gap-2 flex-wrap">
+          <span className="text-sm flex-1">{selected.display_name ?? selected.email}</span>
+          {adminPerms?.can_grant_verified && (
+            <Button size="sm" variant="outline" onClick={() => grantVerifiedMut.mutate(selected.id)}>
+              <BadgeCheck className="w-4 h-4 me-1" /> {lang === "ar" ? "توثيق" : "Verify"}
+            </Button>
+          )}
+          {adminPerms?.can_kick && (
+            <Button size="sm" variant="destructive" onClick={() => kickMut.mutate(selected.id)}>
+              <UserX className="w-4 h-4 me-1" /> {lang === "ar" ? "طرد" : "Kick"}
+            </Button>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
