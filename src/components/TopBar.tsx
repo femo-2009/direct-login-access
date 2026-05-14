@@ -87,6 +87,11 @@ export function TopBar() {
   };
 
   const notImplemented = () => toast.info(t.soon);
+  const goAddPost = () => navigate({ to: "/post/new" });
+  const goNotifications = () => navigate({ to: "/notifications" });
+  const goProfile = () => {
+    if (user?.username) navigate({ to: "/profile/$username", params: { username: user.username } });
+  };
 
   const homeTo = isAdmin
     ? "/admin/dashboard"
