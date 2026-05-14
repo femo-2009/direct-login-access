@@ -87,6 +87,11 @@ export function TopBar() {
   };
 
   const notImplemented = () => toast.info(t.soon);
+  const goAddPost = () => navigate({ to: "/post/new" });
+  const goNotifications = () => navigate({ to: "/notifications" });
+  const goProfile = () => {
+    if (user?.username) navigate({ to: "/profile/$username", params: { username: user.username } });
+  };
 
   const homeTo = isAdmin
     ? "/admin/dashboard"
@@ -145,7 +150,7 @@ export function TopBar() {
           {!isGuest && (
             <button
               type="button"
-              onClick={notImplemented}
+              onClick={goAddPost}
               aria-label={t.add}
               title={t.add}
               className="inline-flex h-9 w-9 items-center justify-center rounded-full text-foreground/80 hover:text-primary hover:bg-accent transition-colors"
@@ -158,7 +163,7 @@ export function TopBar() {
           {!isGuest && (
             <button
               type="button"
-              onClick={notImplemented}
+              onClick={goNotifications}
               aria-label={t.notifications}
               title={t.notifications}
               className="relative inline-flex h-9 w-9 items-center justify-center rounded-full text-foreground/80 hover:text-primary hover:bg-accent transition-colors"
@@ -201,7 +206,7 @@ export function TopBar() {
                     {user?.name ?? user?.username ?? t.profile}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onSelect={notImplemented}>
+                  <DropdownMenuItem onSelect={goProfile}>
                     <UserIcon className="me-2 h-4 w-4" /> {t.profile}
                   </DropdownMenuItem>
                   {isAdmin && (

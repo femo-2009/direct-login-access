@@ -12,10 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as PermissionsRouteImport } from './routes/permissions'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as GuestRouteImport } from './routes/guest'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UserDashboardRouteImport } from './routes/user.dashboard'
+import { Route as ProfileUsernameRouteImport } from './routes/profile.$username'
+import { Route as PostNewRouteImport } from './routes/post.new'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 
 const WelcomeRoute = WelcomeRouteImport.update({
@@ -31,6 +34,11 @@ const SignupRoute = SignupRouteImport.update({
 const PermissionsRoute = PermissionsRouteImport.update({
   id: '/permissions',
   path: '/permissions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -53,6 +61,16 @@ const UserDashboardRoute = UserDashboardRouteImport.update({
   path: '/user/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileUsernameRoute = ProfileUsernameRouteImport.update({
+  id: '/profile/$username',
+  path: '/profile/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PostNewRoute = PostNewRouteImport.update({
+  id: '/post/new',
+  path: '/post/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
   id: '/admin/dashboard',
   path: '/admin/dashboard',
@@ -63,20 +81,26 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/guest': typeof GuestRoute
   '/login': typeof LoginRoute
+  '/notifications': typeof NotificationsRoute
   '/permissions': typeof PermissionsRoute
   '/signup': typeof SignupRoute
   '/welcome': typeof WelcomeRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/post/new': typeof PostNewRoute
+  '/profile/$username': typeof ProfileUsernameRoute
   '/user/dashboard': typeof UserDashboardRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/guest': typeof GuestRoute
   '/login': typeof LoginRoute
+  '/notifications': typeof NotificationsRoute
   '/permissions': typeof PermissionsRoute
   '/signup': typeof SignupRoute
   '/welcome': typeof WelcomeRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/post/new': typeof PostNewRoute
+  '/profile/$username': typeof ProfileUsernameRoute
   '/user/dashboard': typeof UserDashboardRoute
 }
 export interface FileRoutesById {
@@ -84,10 +108,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/guest': typeof GuestRoute
   '/login': typeof LoginRoute
+  '/notifications': typeof NotificationsRoute
   '/permissions': typeof PermissionsRoute
   '/signup': typeof SignupRoute
   '/welcome': typeof WelcomeRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/post/new': typeof PostNewRoute
+  '/profile/$username': typeof ProfileUsernameRoute
   '/user/dashboard': typeof UserDashboardRoute
 }
 export interface FileRouteTypes {
@@ -96,30 +123,39 @@ export interface FileRouteTypes {
     | '/'
     | '/guest'
     | '/login'
+    | '/notifications'
     | '/permissions'
     | '/signup'
     | '/welcome'
     | '/admin/dashboard'
+    | '/post/new'
+    | '/profile/$username'
     | '/user/dashboard'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/guest'
     | '/login'
+    | '/notifications'
     | '/permissions'
     | '/signup'
     | '/welcome'
     | '/admin/dashboard'
+    | '/post/new'
+    | '/profile/$username'
     | '/user/dashboard'
   id:
     | '__root__'
     | '/'
     | '/guest'
     | '/login'
+    | '/notifications'
     | '/permissions'
     | '/signup'
     | '/welcome'
     | '/admin/dashboard'
+    | '/post/new'
+    | '/profile/$username'
     | '/user/dashboard'
   fileRoutesById: FileRoutesById
 }
@@ -127,10 +163,13 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   GuestRoute: typeof GuestRoute
   LoginRoute: typeof LoginRoute
+  NotificationsRoute: typeof NotificationsRoute
   PermissionsRoute: typeof PermissionsRoute
   SignupRoute: typeof SignupRoute
   WelcomeRoute: typeof WelcomeRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
+  PostNewRoute: typeof PostNewRoute
+  ProfileUsernameRoute: typeof ProfileUsernameRoute
   UserDashboardRoute: typeof UserDashboardRoute
 }
 
@@ -155,6 +194,13 @@ declare module '@tanstack/react-router' {
       path: '/permissions'
       fullPath: '/permissions'
       preLoaderRoute: typeof PermissionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -185,6 +231,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UserDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/$username': {
+      id: '/profile/$username'
+      path: '/profile/$username'
+      fullPath: '/profile/$username'
+      preLoaderRoute: typeof ProfileUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/post/new': {
+      id: '/post/new'
+      path: '/post/new'
+      fullPath: '/post/new'
+      preLoaderRoute: typeof PostNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/dashboard': {
       id: '/admin/dashboard'
       path: '/admin/dashboard'
@@ -199,22 +259,15 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   GuestRoute: GuestRoute,
   LoginRoute: LoginRoute,
+  NotificationsRoute: NotificationsRoute,
   PermissionsRoute: PermissionsRoute,
   SignupRoute: SignupRoute,
   WelcomeRoute: WelcomeRoute,
   AdminDashboardRoute: AdminDashboardRoute,
+  PostNewRoute: PostNewRoute,
+  ProfileUsernameRoute: ProfileUsernameRoute,
   UserDashboardRoute: UserDashboardRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
