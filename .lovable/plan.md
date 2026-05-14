@@ -1,85 +1,66 @@
-## Goal
+# خطة شاملة: 3 أوضاع (ضيف / مستخدم / أدمن)
 
-Turn Rawy Blog into a full 3-role social platform (Guest / User / Admin) **without changing the existing visual design**. All new UI reuses the current colors, fonts, logo, and component style.
+قاعدة البيانات جاهزة بالفعل (profiles, posts, follows, likes, comments, reports, badges, admin_permissions, categories, notifications). الخطة تركّز على بناء الواجهات والربط.
 
-## Phase 0 — Enable Lovable Cloud + base schema
+## 1. الضيف (Guest)
+- صفحة `/guest` للقراءة فقط: feed المنشورات + فتح منشور في مودال للقراءة الكاملة.
+- إخفاء أزرار: إضافة منشور، إعجاب، تعليق، متابعة، إشعارات، بروفايل.
+- زر دائم "سجّل الدخول لإضافة محتوى".
 
-Enable Cloud (Postgres + Auth + Storage + Realtime). Create:
+## 2. المستخدم (User) — `/user/dashboard`
+**الشريط العلوي (TopBar موجود، نعدّله):** شعار + زر اللغة (EN افتراضي) + زر إضافة + زر إشعارات + زر إعدادات (Profile / Logout).
 
-- `profiles` (id → auth.users, username, display_name, avatar_url, bio, created_at)
-- `user_roles` (user_id, role: `admin` | `user`) — separate table, with `has_role()` security-definer function
-- `admin_permissions` (user_id, can_kick, can_delete_posts, can_grant_verified, can_review_reports, can_manage_categories) — granular admin powers
-- `categories` (id, name_en, name_ar, slug) — managed by admins (e.g. "Sci-Fi")
-- `posts` (id, author_id, title, content, image_url, category_id, created_at)
-- `comments` (id, post_id, author_id, content, created_at)
-- `likes` (post_id, user_id) — composite PK
-- `follows` (follower_id, following_id) — composite PK
-- `reports` (id, post_id, reporter_id, reason, status, created_at)
-- `notifications` (id, user_id, type: follow|new_post|report|admin_grant, payload jsonb, read, created_at)
-- `badges` (id, user_id, type: verified|admin|tier, granted_by, created_at)
-- Storage buckets: `avatars` (public), `post-images` (public)
+**الفيد الرئيسي:**
+- بطاقة منشور حديثة: صورة الناشر (تفتح بروفايله) + الاسم + الشارات (verified/admin/level) + زر Follow + العنوان + مقتطف من القصة + الصورة + زرّ Love (قلب + صوت) + زر Comment (يفتح مودال + صوت عند الإرسال) + زر Report.
+- الضغط على المنشور يفتح Modal بالقصة كاملة.
 
-RLS on every table. Auto-create profile on signup via trigger. Auto-assign `user` role on signup; first signup with the existing admin email gets `admin` + all permissions.
+**صفحة إضافة منشور `/post/new`:** عنوان + رفع صورة (bucket `post-images`) + المحتوى + اختيار تصنيف من قائمة `categories`.
 
-## Phase 1 — Auth modes & guest flow
+**صفحة البروفايل `/profile/$username`:**
+- صورة بروفايل قابلة للرفع (bucket `avatars`) + الاسم + عدد المنشورات + المستوى المحسوب تلقائياً:
+  - مبتدئ: 0–3، فضي: 4–7، ذهبي: 8–15، ماسي: 16+
+- شارات (verified من الأدمن، شارة مستوى من النظام).
+- عدد المتابِعين والمتابَعين (قابلة للفتح).
+- شبكة منشورات المستخدم.
 
-- **Guest**: "Continue as guest" on login → can read posts and view profiles only. Cannot like, comment, follow, post, or own a profile. Any restricted action shows a "sign up to continue" prompt.
-- **User**: standard email signup/login → goes to home feed.
-- **Admin**: same login, but routed to admin dashboard with admin badge.
-- Top bar shown on every page (login, home, profile, etc.) with: **Language toggle** (EN default ↔ AR), and when logged-in: **Add post**, **Notifications**, **Settings menu** (→ Profile / Logout). Guest sees only Language + Sign up.
+**الإشعارات `/notifications`:** قائمة من جدول `notifications` (متابعة جديدة + منشور جديد لمن تتابع). علامة قراءة. Realtime اشتراك. (الإشعارات خارج البرنامج/Web Push نتركها كمرحلة لاحقة لأنها تتطلب VAPID + Service Worker.)
 
-## Phase 2 — Posts, feed & post detail
+**اللغة:** زر تبديل عربي/إنجليزي ثابت في كل الصفحات (LanguageContext موجود).
 
-- **Add Post form**: title, image upload, body, category dropdown (from admin-managed list).
-- **Feed**: modern card grid — cover image, title, author avatar + name + badges, follow button, excerpt, like / comment / report buttons.
-- **Post detail modal/page**: full story, scroll-friendly typography, comments below.
-- Likes: heart icon, plays a soft "pop" sound on click.
-- Comments: input + send, plays a soft "tap" sound on submit.
-- Report: sends a `report` notification to all admins with `can_review_reports`.
-- Click author avatar anywhere → opens that user's profile (read-only for guests).
+## 3. الأدمن (Admin) — `/admin/dashboard`
+كل ميزات المستخدم + قائمة إعدادات إضافية:
+- **المستخدمون:** بحث بالاسم/الـusername/الإيميل، طرد (حذف من auth)، منح شارة Verified.
+- **إضافة أدمن:** بحث عن مستخدم → اختيار صلاحيات (kick / delete_posts / grant_verified / review_reports / manage_categories) → إدراج في `user_roles` + `admin_permissions`.
+- **التصنيفات:** CRUD على `categories` (اسم عربي + إنجليزي + slug).
+- **البلاغات:** قائمة `reports` مع إمكانية حذف المنشور أو رفض البلاغ.
+- شارة أدمن مخصّصة تظهر بجانب اسمه في كل مكان.
 
-## Phase 3 — Profiles, tiers, follows, notifications
+## 4. تفاعلات المنشور
+- Love: insert/delete في `likes` + تشغيل صوت قصير (`/assets/sounds/like.mp3`).
+- Comment: insert في `comments` + صوت (`/assets/sounds/comment.mp3`) + عرض التعليقات.
+- Report: insert في `reports` (يصل للأدمن تلقائياً عبر RLS).
+- Follow: insert/delete في `follows` (الـtrigger الموجود `notify_on_follow` يصنع الإشعار).
 
-- Profile page: avatar (uploadable), display name, post count, **auto tier badge** computed from posts:
-  - 0–3 → Beginner
-  - 4–7 → Silver
-  - 8–15 → Gold
-  - 16+ → Master
-- Plus optional **Verified** badge (granted by admin) and **Admin** badge (only admins).
-- Followers / Following counts + lists.
-- Follow button creates a `follow` notification for the followed user.
-- New post by someone you follow creates a `new_post` notification for each follower.
-- **Notifications panel** (bell dropdown): list, mark-as-read, realtime via Supabase Realtime.
-- **Browser push**: request `Notification` permission and fire a native browser notification when a realtime notification arrives while the tab is open or backgrounded (true OS push requires a service worker + VAPID — out of scope for v1, can be added later).
+## التفاصيل التقنية
+- Storage: `avatars` و `post-images` موجودان (public). نضيف RLS upload policies إن لم تكن موجودة.
+- Realtime: تفعيل `notifications` و `posts` في `supabase_realtime`.
+- ملفات صوت: نضيف ملفين قصيرين في `public/assets/sounds/`.
+- الشارات: مكوّن `<UserBadges>` يقرأ من `badges` + يحسب شارة المستوى من عدد المنشورات.
+- الترجمة: نوسّع قواميس `EN/AR` في كل صفحة جديدة.
 
-## Phase 4 — Admin dashboard
+## ترتيب التنفيذ (تدريجي)
+1. Storage policies + تفعيل Realtime + إضافة ملفات الصوت.
+2. مكوّنات مشتركة: `PostCard`, `PostModal`, `UserBadges`, `LevelBadge`, `FollowButton`.
+3. صفحة Feed داخل `UserDashboard` + صفحة `GuestPage` للقراءة فقط.
+4. صفحة `/post/new` (إضافة منشور).
+5. صفحة `/profile/$username` (مع رفع الأفاتار + المتابعون/المتابَعون).
+6. صفحة `/notifications` + Realtime.
+7. صفحة `/admin/dashboard` (المستخدمون، إضافة أدمن، التصنيفات، البلاغات).
+8. ربط الأصوات وزر Follow و Like و Comment و Report.
 
-Settings menu for admins gets extra items:
+## ملاحظات
+- لن نتطرّق لإشعارات Push خارج المتصفح في هذه الخطة (تحتاج إعداد VAPID وService Worker — يمكن إضافتها لاحقاً عند الطلب).
+- "الطرد" يعني حذف المستخدم من النظام عبر serverFn يستخدم `supabaseAdmin.auth.admin.deleteUser`.
+- جميع التحقّقات الحسّاسة (طرد، حذف منشور، منح شارة) تجري عبر RLS الموجودة + serverFn محمي بـ`requireSupabaseAuth`.
 
-- **Users on the site**: list with search by name / username / email.
-- **Add admin**: search a user → checkbox list of permissions → grant `admin` role + selected `admin_permissions` + admin badge.
-- Per-post admin actions (visible only to admins with the matching permission):
-  - Kick user (disable account)
-  - Delete post
-  - Grant Verified badge to author
-- **Reports inbox**: review reported posts, delete or dismiss.
-- **Categories manager**: add / edit / delete categories used in the post form.
-
-## Phase 5 — Polish & QA
-
-- Sound assets (like + comment) added to `src/assets/sounds/`.
-- All new strings translated EN + AR via existing `LanguageContext`.
-- Verify the original design tokens, splash, and login look untouched.
-- Test each role end-to-end in the preview.
-
-## Technical notes
-
-- Stack stays as-is: TanStack Start, file-based routes, existing `LanguageContext`, existing splash gate.
-- New routes: `/feed`, `/post/$postId`, `/profile/$username`, `/admin/users`, `/admin/categories`, `/admin/reports`, `/admin/add-admin`.
-- All DB writes go through `createServerFn` with `requireSupabaseAuth`; admin-only mutations check `has_role` + the matching `admin_permissions` flag server-side.
-- Realtime via `supabase.channel('notifications:user_id=eq.<me>')`.
-- Guest mode = no Supabase session; restricted actions are gated client-side AND by RLS.
-
-## Delivery
-
-I'll implement Phase 0 + Phase 1 in the first pass so you can sign in / browse / see the new top bar, then continue Phase 2 → 5 in follow-up turns. Each phase is independently testable.
+هل أبدأ بالتنفيذ على هذا الترتيب؟ أو هل تريد تعديل الأولويات (مثلاً تأجيل لوحة الأدمن أو الإشعارات الخارجية)؟
